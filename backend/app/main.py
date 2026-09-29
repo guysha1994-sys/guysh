@@ -9,6 +9,7 @@ from app.config import Settings
 from app.db import init_db
 from app.routers import auth as auth_router
 from app.routers import portfolio as portfolio_router
+from app.routers import recommendations as recommendations_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -21,6 +22,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(auth_router.router)
     app.include_router(portfolio_router.router, dependencies=[Depends(require_session)])
+    app.include_router(
+        recommendations_router.router, dependencies=[Depends(require_session)]
+    )
 
     @app.get("/api/health")
     def health():
