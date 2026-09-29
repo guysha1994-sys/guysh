@@ -4,11 +4,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse, Response
+from starlette.responses import FileResponse, Response
 
 from app.auth import require_session
 from app.config import Settings
@@ -46,14 +47,19 @@ def create_app(settings: Settings | None = None, start_scheduler_job: bool = Tru
     if frontend_dist.exists():
         app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
 
+        def _looks_like_navigation(path: str) -> bool:
+            last_segment = path.rsplit("/", 1)[-1]
+            return "." not in last_segment
+
         @app.exception_handler(StarletteHTTPException)
         async def spa_fallback(request: Request, exc: StarletteHTTPException) -> Response:
-            if exc.status_code == 404 and not request.url.path.startswith("/api"):
+            is_api_path = request.url.path == "/api" or request.url.path.startswith("/api/")
+            if (
+                exc.status_code == 404
+                and not is_api_path
+                and _looks_like_navigation(request.url.path)
+            ):
                 return FileResponse(frontend_dist / "index.html")
-            return JSONResponse(
-                {"detail": exc.detail},
-                status_code=exc.status_code,
-                headers=getattr(exc, "headers", None),
-            )
+            return await http_exception_handler(request, exc)
 
     return app
