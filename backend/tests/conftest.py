@@ -19,5 +19,5 @@ def settings(tmp_path):
 
 @pytest.fixture
 def client(settings):
-    app = create_app(settings)
+    app = create_app(settings, start_scheduler_job=False)
     return TestClient(app)
