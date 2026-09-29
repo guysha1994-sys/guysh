@@ -44,6 +44,27 @@ def test_fetch_current_price_and_change(monkeypatch):
     assert round(pct_change, 2) == 10.0
 
 
+def test_fetch_history_drops_nan_close_rows(monkeypatch):
+    monkeypatch.setattr(
+        data_fetcher.yf,
+        "Ticker",
+        lambda t: FakeTicker([10.0, float("nan"), 12.0], [100, 200, 300]),
+    )
+    result = data_fetcher.fetch_history("AAPL")
+    assert result.closes == [10.0, 12.0]
+    assert result.volumes == [100, 300]
+
+
+def test_fetch_history_returns_none_when_all_closes_are_nan(monkeypatch):
+    monkeypatch.setattr(
+        data_fetcher.yf,
+        "Ticker",
+        lambda t: FakeTicker([float("nan"), float("nan")], [100, 200]),
+    )
+    result = data_fetcher.fetch_history("AAPL")
+    assert result is None
+
+
 def test_fetch_current_price_and_change_no_data(monkeypatch):
     monkeypatch.setattr(data_fetcher.yf, "Ticker", lambda t: AlwaysFailsTicker())
     monkeypatch.setattr(data_fetcher.time, "sleep", lambda s: None)

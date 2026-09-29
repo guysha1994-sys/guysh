@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 
 import yfinance as yf
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -19,6 +22,10 @@ def fetch_history(
     for attempt in range(retries):
         try:
             data = yf.Ticker(ticker).history(period=period)
+            # yfinance can return rows with a NaN Close (e.g. a halted session);
+            # a NaN close breaks JSON serialization downstream and can silently
+            # poison screener scoring, so drop those rows before using the data.
+            data = data.dropna(subset=["Close"])
             if data.empty:
                 return None
             return PriceHistory(
@@ -26,7 +33,16 @@ def fetch_history(
                 closes=data["Close"].tolist(),
                 volumes=data["Volume"].tolist(),
             )
-        except Exception:
+        except Exception as exc:
+            is_last_attempt = attempt == retries - 1
+            logger.warning(
+                "fetch_history failed for %s (attempt %d/%d)%s: %s",
+                ticker,
+                attempt + 1,
+                retries,
+                "" if not is_last_attempt else ", giving up",
+                exc,
+            )
             time.sleep(backoff_seconds * (attempt + 1))
     return None
 

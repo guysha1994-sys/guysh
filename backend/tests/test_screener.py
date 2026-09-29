@@ -61,6 +61,25 @@ def test_evaluate_ticker_rejects_low_liquidity():
     assert result is None
 
 
+def test_evaluate_ticker_rejects_non_finite_score(monkeypatch):
+    import app.screener as screener_module
+
+    closes = _uptrend_closes()
+    volumes = [1_000_000] * len(closes)
+    history = PriceHistory(ticker="AAPL", closes=closes, volumes=volumes)
+    benchmark = PriceHistory(
+        ticker="^GSPC", closes=_uptrend_closes(daily_gain=0.02), volumes=[0] * 260
+    )
+
+    # Force relative_strength to return NaN so a non-finite score reaches the
+    # guard in evaluate_ticker, as if NaN had leaked in from upstream data.
+    monkeypatch.setattr(screener_module, "relative_strength", lambda *args, **kwargs: float("nan"))
+
+    result = evaluate_ticker(history, benchmark, ScreenerConfig())
+
+    assert result is None
+
+
 def test_run_screener_ranks_and_limits_results(monkeypatch):
     import app.screener as screener_module
 

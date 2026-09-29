@@ -23,3 +23,11 @@ def test_logout_clears_session(client):
     client.post("/api/auth/logout")
     resp = client.get("/api/portfolio")
     assert resp.status_code == 401
+
+
+def test_login_with_non_ascii_password_rejected_cleanly(client):
+    # hmac.compare_digest raises TypeError on non-ASCII str input; verify_password
+    # must encode to bytes first so a wrong Hebrew/emoji password is a clean 401,
+    # not a 500.
+    resp = client.post("/api/auth/login", json={"password": "סיסמה-שגויה-🙂"})
+    assert resp.status_code == 401

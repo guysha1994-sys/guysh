@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+import logging
+import math
 from dataclasses import dataclass
 from datetime import date
 
 from app.data_fetcher import PriceHistory, fetch_history
 from app.db import get_connection
 from app.indicators import avg_dollar_volume, pct_from_52w_high, relative_strength, sma
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -57,6 +61,13 @@ def evaluate_ticker(
         return None
 
     score = rel_strength + (100 + pct_high)
+    if not math.isfinite(score):
+        # Belt-and-suspenders: a NaN/inf score would pass the numeric guard
+        # clauses above silently (NaN comparisons are always False) and then
+        # fail the NOT NULL constraint on screener_results.score, losing the
+        # *entire* day's save — reject it here instead, per-ticker.
+        logger.warning("Rejecting %s: non-finite score computed (%r)", history.ticker, score)
+        return None
     return ScreenerResult(
         ticker=history.ticker,
         score=score,
@@ -77,12 +88,16 @@ def run_screener(
     config = config or ScreenerConfig()
     benchmark_history = fetch_history(benchmark_ticker, period="1y")
     if benchmark_history is None:
+        logger.warning(
+            "Benchmark history fetch failed for %s; aborting screener run", benchmark_ticker
+        )
         return []
 
     results: list[ScreenerResult] = []
     for ticker in tickers:
         history = fetch_history(ticker, period="1y")
         if history is None:
+            logger.info("Skipping %s: history fetch failed", ticker)
             continue
         result = evaluate_ticker(history, benchmark_history, config)
         if result is not None:

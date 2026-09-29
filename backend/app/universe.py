@@ -1,21 +1,39 @@
 from __future__ import annotations
 
+import io
+import urllib.request
+
 import pandas as pd
 
 from app.db import get_connection
 
 SP500_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-NASDAQ100_URL = "https://en.wikipedia.org/wiki/Nasdaq-100"
+NASDAQ100_URL = "https://en.wikipedia.org/wiki/List_of_NASDAQ-100_companies"
+
+# Wikipedia blocks the default `Python-urllib` User-Agent (pandas' urllib default)
+# with a 403, so we fetch the page ourselves with a browser-like UA and hand the
+# HTML text to pandas instead of letting pd.read_html fetch the URL itself.
+_USER_AGENT = (
+    "Mozilla/5.0 (compatible; StockerBot/1.0; +https://github.com/)"
+)
+
+
+def _fetch_html(url: str) -> str:
+    request = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
+    with urllib.request.urlopen(request) as response:
+        return response.read().decode("utf-8")
 
 
 def fetch_sp500_tickers() -> list[str]:
-    tables = pd.read_html(SP500_URL)
+    html = _fetch_html(SP500_URL)
+    tables = pd.read_html(io.StringIO(html))
     df = tables[0]
     return [str(t).replace(".", "-") for t in df["Symbol"].tolist()]
 
 
 def fetch_nasdaq100_tickers() -> list[str]:
-    tables = pd.read_html(NASDAQ100_URL)
+    html = _fetch_html(NASDAQ100_URL)
+    tables = pd.read_html(io.StringIO(html))
     for table in tables:
         if "Ticker" in table.columns:
             return [str(t).replace(".", "-") for t in table["Ticker"].tolist()]
