@@ -27,7 +27,8 @@ def test_full_flow_login_buy_recommend_indices(client, settings, monkeypatch):
 
     # קנייה
     buy_resp = client.post(
-        "/api/portfolio", json={"ticker": "AAPL", "entry_price": 100.0, "stop_loss": 90.0}
+        "/api/portfolio",
+        json={"ticker": "AAPL", "entry_price": 100.0, "quantity": 10, "stop_loss": 90.0},
     )
     assert buy_resp.status_code == 200
 
