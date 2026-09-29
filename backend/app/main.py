@@ -5,7 +5,10 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.requests import Request
+from starlette.responses import FileResponse, JSONResponse, Response
 
 from app.auth import require_session
 from app.config import Settings
@@ -42,5 +45,11 @@ def create_app(settings: Settings | None = None, start_scheduler_job: bool = Tru
     frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
     if frontend_dist.exists():
         app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+
+        @app.exception_handler(StarletteHTTPException)
+        async def spa_fallback(request: Request, exc: StarletteHTTPException) -> Response:
+            if exc.status_code == 404 and not request.url.path.startswith("/api"):
+                return FileResponse(frontend_dist / "index.html")
+            return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
 
     return app
