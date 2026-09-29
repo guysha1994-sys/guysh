@@ -32,7 +32,7 @@
 │  └────────────┘ └───────────┘ └─────────────┘ │
 │  ┌─────────────────────────────────────────┐  │
 │  │ APScheduler: job EOD יומי אחרי סגירה      │  │
-│  │  → screener על S&P500+Nasdaq (~1500)     │  │
+│  │  → screener על S&P500+Nasdaq-100 (~600)  │  │
 │  └─────────────────────────────────────────┘  │
 │  data_fetcher (yfinance) │ indicators │ scorer │
 └───────────────────┬───────────────────────────┘
@@ -76,10 +76,9 @@
 
 | טבלה | שדות עיקריים | הערות |
 |---|---|---|
-| `auth_config` | `password_hash` | שורה יחידה, משתמש אחד |
 | `portfolio_positions` | `id, ticker, entry_price, stop_loss, entry_date, status (open/closed), close_date` | "מחיר נוכחי" ו-% רווח/הפסד מחושבים בזמן טעינה, לא מאוחסנים |
 | `screener_results` | `run_date, ticker, score, metrics (json)` | תוצאות ריצת EOD; נשמרות כדי להציג היסטוריה/לבדוק תקינות |
-| `universe_tickers` | `ticker, index_name (sp500/nasdaq)` | רשימת הטיקרים לסריקת EOD; מתעדכנת מדי פעם (מקור סטטי, למשל טבלת ויקיפדיה) |
+| `universe_tickers` | `ticker, index_name (sp500/nasdaq100)` | רשימת הטיקרים לסריקת EOD (S&P500 ∪ Nasdaq-100, כ-600 טיקרים ייחודיים); מתעדכנת מדי פעם מטבלאות ויקיפדיה. נבחר Nasdaq-100 ולא כל הרשימה הנסחרת ב-Nasdaq (כ-3000+ טיקרים) כדי להימנע משליפה שברירית וממניות דלות-סחירות שממילא היו נופלות בסינון הנזילות |
 | `watched_indices` | `symbol, display_name, sort_order` | רשימת מדדים/ETF-ים שהמשתמש בעצמו מנהל במסך המדדים |
 
 ## מסכים
@@ -114,9 +113,12 @@ S&P500+Nasdaq (~1500 טיקרים):
 
 ## אבטחה
 
-סיסמה אחת בלבד (המשתמש היחיד באפליקציה). Login endpoint בודק את
-הסיסמה מול hash שמור, מנפיק session cookie חתום (HttpOnly, Secure).
-כל ה-API תחת session תקף. אין ניהול משתמשים, הרשאות, או הרשמה.
+סיסמה אחת בלבד (המשתמש היחיד באפליקציה), מוגדרת כמשתנה סביבה — לא
+נשמרת ב-DB, כך שאין צורך בטבלת משתמשים בכלל. Login endpoint משווה את
+הסיסמה שנשלחה למשתנה הסביבה בהשוואה עמידה בפני timing attacks
+(`hmac.compare_digest`), ומנפיק session cookie חתום (Starlette
+SessionMiddleware). כל ה-API תחת session תקף. אין ניהול משתמשים,
+הרשאות, או הרשמה.
 
 ## טיפול בשגיאות
 
