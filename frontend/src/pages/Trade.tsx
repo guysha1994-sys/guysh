@@ -72,6 +72,7 @@ export default function Trade() {
 
   async function handleSell() {
     if (!position) return;
+    if (!window.confirm(`Sell all ${position.quantity} ${position.ticker}?`)) return;
     setBusy(true);
     setError(null);
     try {
