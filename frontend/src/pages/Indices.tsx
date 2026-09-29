@@ -77,14 +77,24 @@ export default function Indices() {
         </thead>
         <tbody>
           {indices.map((i) => (
-            <tr key={i.symbol}>
+            <tr
+              key={i.symbol}
+              onClick={() => navigate(`/trade/${i.symbol}`)}
+              style={{ cursor: "pointer" }}
+            >
               <td>{i.symbol}</td>
               <td>{i.display_name}</td>
               <td className="numeric">
                 <PriceCell price={i.current_price} pctChange={i.pct_change} />
               </td>
               <td>
-                <button className="secondary" onClick={() => handleRemove(i.symbol)}>
+                <button
+                  className="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove(i.symbol);
+                  }}
+                >
                   Remove
                 </button>
               </td>

@@ -1,5 +1,6 @@
 // frontend/src/pages/Portfolio.tsx
 import { useCallback, useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError, getPortfolio } from "../api";
 import type { Position } from "../api";
@@ -10,6 +11,7 @@ import { RefreshBar } from "../components/RefreshBar";
 export default function Portfolio() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [newTicker, setNewTicker] = useState("");
   const navigate = useNavigate();
 
   const fetchPositions = useCallback(async () => {
@@ -27,6 +29,13 @@ export default function Portfolio() {
   }, [navigate]);
 
   const { lastUpdated, refresh } = usePolling(fetchPositions);
+
+  function handleAddTicker(e: FormEvent) {
+    e.preventDefault();
+    const ticker = newTicker.trim().toUpperCase();
+    if (!ticker) return;
+    navigate(`/trade/${ticker}`);
+  }
 
   return (
     <div>
@@ -75,6 +84,17 @@ export default function Portfolio() {
           </tbody>
         </table>
       )}
+
+      <form onSubmit={handleAddTicker} style={{ marginTop: "24px" }}>
+        <input
+          value={newTicker}
+          onChange={(e) => setNewTicker(e.target.value)}
+          placeholder="Ticker (e.g. AAPL)"
+          required
+          style={{ marginRight: "8px" }}
+        />
+        <button type="submit">Add position</button>
+      </form>
     </div>
   );
 }
