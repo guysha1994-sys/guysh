@@ -1,0 +1,11 @@
+.git
+.claude
+.superpowers
+docs
+**/.venv
+**/node_modules
+**/dist
+**/__pycache__
+*.pyc
+*.db
+*.tsbuildinfo
