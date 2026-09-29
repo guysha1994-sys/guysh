@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - stocker_data:/data
+    environment:
+      - STOCKER_SESSION_SECRET=${STOCKER_SESSION_SECRET}
+      - STOCKER_LOGIN_PASSWORD=${STOCKER_LOGIN_PASSWORD}
+      - STOCKER_DB_PATH=/data/stocker.db
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  stocker_data:
+  caddy_data:
+  caddy_config:
