@@ -8,6 +8,7 @@ from app.auth import require_session
 from app.config import Settings
 from app.db import init_db
 from app.routers import auth as auth_router
+from app.routers import portfolio as portfolio_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -19,14 +20,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     init_db(settings.db_path)
 
     app.include_router(auth_router.router)
+    app.include_router(portfolio_router.router, dependencies=[Depends(require_session)])
 
     @app.get("/api/health")
     def health():
         return {"status": "ok"}
-
-    @app.get("/api/portfolio", dependencies=[Depends(require_session)])
-    def _placeholder_portfolio():
-        # Task 9 מחליף את זה ב-router אמיתי
-        return {}
 
     return app
