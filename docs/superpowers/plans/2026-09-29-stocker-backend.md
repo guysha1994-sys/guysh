@@ -7,7 +7,7 @@ fetcher, אינדיקטורים, סקרינר, ריצת EOD מתוזמנת, אי
 מלא לתיק/המלצות/מדדים. בסוף הפלאן יש שרת שאפשר להריץ מקומית ולבדוק
 עם curl/pytest — בלי frontend עדיין.
 
-**Architecture:** Python 3.11, FastAPI מעל Starlette (session cookies
+**Architecture:** Python 3.9+ (local dev), FastAPI מעל Starlette (session cookies
 מובנים), SQLite גולמי (בלי ORM) דרך מודול `db.py` אחד, `yfinance` בתור
 מקור הנתונים היחיד, `APScheduler` לריצת ה-EOD היומית. כל מודול לוגי
 (indicators/screener/data_fetcher/universe/portfolio) הוא קובץ נפרד עם
@@ -21,7 +21,12 @@ APScheduler, sqlite3 (built-in), pytest, httpx (ל-TestClient).
 
 ## Global Constraints
 
-- Python 3.11+, בלי ORM — גישה ל-SQLite דרך `sqlite3` גולמי בלבד.
+- Python 3.9+ לפיתוח מקומי (מכונת הפיתוח הזמינה כרגע נושאת רק 3.9.6,
+  בלי pyenv/Homebrew להתקין גרסה חדשה יותר) — כל מודול פותח עם
+  `from __future__ import annotations` כדי ש-`X | None` (PEP604) יעבוד
+  גם על 3.9. תמונת ה-Docker (Task 13) עדיין `python:3.11-slim` — זה לא
+  תלוי בגרסת הפייתון של מכונת הפיתוח. בלי ORM — גישה ל-SQLite דרך
+  `sqlite3` גולמי בלבד.
 - אימות: סיסמה בודדת מתוך `STOCKER_LOGIN_PASSWORD` (env var), מושווית
   עם `hmac.compare_digest`. בלי טבלת משתמשים, בלי הרשמה, בלי ריבוי
   משתמשים (מחוץ לתחום לפי ה-spec).
