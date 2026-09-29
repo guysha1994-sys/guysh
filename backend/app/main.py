@@ -50,6 +50,10 @@ def create_app(settings: Settings | None = None, start_scheduler_job: bool = Tru
         async def spa_fallback(request: Request, exc: StarletteHTTPException) -> Response:
             if exc.status_code == 404 and not request.url.path.startswith("/api"):
                 return FileResponse(frontend_dist / "index.html")
-            return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+            return JSONResponse(
+                {"detail": exc.detail},
+                status_code=exc.status_code,
+                headers=getattr(exc, "headers", None),
+            )
 
     return app
