@@ -63,7 +63,7 @@ export default function Portfolio() {
                 </td>
                 <td
                   className={`numeric ${
-                    p.pnl_pct !== null && p.pnl_pct >= 0 ? "positive" : "negative"
+                    p.pnl_pct === null ? "" : p.pnl_pct >= 0 ? "positive" : "negative"
                   }`}
                 >
                   {p.pnl_pct !== null
