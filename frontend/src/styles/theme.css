@@ -116,6 +116,15 @@ a {
   text-decoration: none;
 }
 
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
 .error-text {
   color: var(--negative);
   font-size: 13px;
@@ -150,5 +159,10 @@ a {
   td {
     padding: 8px 6px;
     font-size: 13px;
+  }
+
+  .navbar {
+    flex-wrap: wrap;
+    gap: 12px 16px;
   }
 }

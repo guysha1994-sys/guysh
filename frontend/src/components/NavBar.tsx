@@ -3,16 +3,7 @@ import type { CSSProperties } from "react";
 
 export default function NavBar() {
   return (
-    <nav
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "24px",
-        padding: "14px 20px",
-        borderBottom: "1px solid var(--border)",
-        fontFamily: "var(--font-mono)",
-      }}
-    >
+    <nav className="navbar">
       <span style={{ color: "var(--accent)", fontWeight: 600 }}>STOCKER</span>
       <NavLink to="/portfolio" style={navLinkStyle}>
         Portfolio
